@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viveka Vara</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: "hsl(var(--border))",
+            input: "hsl(var(--input))",
+            ring: "hsl(var(--ring))",
+            background: "hsl(var(--background))",
+            foreground: "hsl(var(--foreground))",
+            primary: {
+              DEFAULT: "hsl(var(--primary))",
+              foreground: "hsl(var(--primary-foreground))",
+            },
+            secondary: {
+              DEFAULT: "hsl(var(--secondary))",
+              foreground: "hsl(var(--secondary-foreground))",
+            },
+            destructive: {
+              DEFAULT: "hsl(var(--destructive))",
+              foreground: "hsl(var(--destructive-foreground))",
+            },
+            muted: {
+              DEFAULT: "hsl(var(--muted))",
+              foreground: "hsl(var(--muted-foreground))",
+            },
+            accent: {
+              DEFAULT: "hsl(var(--accent))",
+              foreground: "hsl(var(--accent-foreground))",
+            },
+            popover: {
+              DEFAULT: "hsl(var(--popover))",
+              foreground: "hsl(var(--popover-foreground))",
+            },
+            card: {
+              DEFAULT: "hsl(var(--card))",
+              foreground: "hsl(var(--card-foreground))",
+            },
+          },
+          animation: {
+            grid: "grid 15s linear infinite",
+          },
+          keyframes: {
+            grid: {
+              "0%": { transform: "translateY(-50%)" },
+              "100%": { transform: "translateY(0)" },
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Custom utility for smooth color transitions on all affected properties */
+    .transition-theme {
+      transition: background-color 1.5s ease, filter 1.5s ease, transform 0.5s ease, opacity 1s ease, color 1.5s ease, fill 1.5s ease, stroke 1.5s ease;
+    }
+
+    /* Camera Effects */
+    .animate-shake {
+      animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both infinite;
+    }
+
+    @keyframes shake {
+
+      10%,
+      90% {
+        transform: translate3d(-1px, 0, 0);
+      }
+
+      20%,
+      80% {
+        transform: translate3d(2px, 0, 0);
+      }
+
+      30%,
+      50%,
+      70% {
+        transform: translate3d(-4px, 0, 0);
+      }
+
+      40%,
+      60% {
+        transform: translate3d(4px, 0, 0);
+      }
+    }
+
+    .animate-pulse-fast {
+      animation: pulse-fast 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+    }
+
+    @keyframes pulse-fast {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .8;
+        transform: scale(1.05);
+      }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-slow {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.8;
+      }
+    }
+
+    .animate-breathing {
+      animation: breathing 4s ease-in-out infinite;
+    }
+
+    @keyframes breathing {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.02);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* Sky Animation */
+    .animate-sky-move {
+      animation: sky-move 60s ease-in-out infinite alternate;
+    }
+
+    @keyframes sky-move {
+      0% {
+        background-position: 50% 0%;
+      }
+
+      100% {
+        background-position: 50% 100%;
+      }
+    }
+
+    /* Nature Animations */
+    .animate-sway {
+      animation: sway 5s ease-in-out infinite alternate;
+      transform-origin: bottom center;
+    }
+
+    @keyframes sway {
+      from {
+        transform: skewX(-2deg);
+      }
+
+      to {
+        transform: skewX(2deg);
+      }
+    }
+
+    .animate-sway-heavy {
+      animation: sway-heavy 1s ease-in-out infinite alternate;
+      transform-origin: bottom center;
+    }
+
+    @keyframes sway-heavy {
+      from {
+        transform: skewX(-5deg) translateX(-2px);
+      }
+
+      to {
+        transform: skewX(5deg) translateX(2px);
+      }
+    }
+
+    /* Star/Light Twinkle */
+    .animate-twinkle {
+      animation: twinkle 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0.3;
+        transform: scale(0.8);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+  </style>
+  <script type="module" src="/index.tsx"></script>
+</head>
+
+<body class="bg-black overflow-hidden">
+  <div id="root"></div>
+</body>
+
+</html>

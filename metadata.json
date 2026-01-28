@@ -1,0 +1,8 @@
+{
+  "name": "Viveka Vara",
+  "description": "A React-based prototype of a 2D side-scrolling environment that dynamically reacts to user emotions via UI controls or AI text analysis.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
