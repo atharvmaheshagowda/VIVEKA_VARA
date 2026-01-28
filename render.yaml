@@ -1,22 +1,10 @@
 services:
-  # Backend Service (Emotion AI Bridge)
+  # Unified Service (Frontend + Backend)
   - type: web
-    name: viveka-vara-backend
+    name: VIVEKA_VARA
     runtime: python
-    buildCommand: pip install -r backend/requirements.txt
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: python backend/emotion_bridge.py
     envVars:
       - key: PORT
         value: 10000
-
-  # Frontend Service (Vite React App)
-  - type: static_site
-    name: viveka-vara-frontend
-    publishPath: dist
-    buildCommand: chmod +x build.sh && ./build.sh
-    envVars:
-      - key: VITE_WS_URL
-        # Note: We will need to update this manually in the Render dashboard 
-        # to use wss:// once the backend URL is generated, or use the Internal Host.
-        # For a Blueprint, we can try to guess it if we know the name.
-        value: "wss://viveka-vara-backend.onrender.com"

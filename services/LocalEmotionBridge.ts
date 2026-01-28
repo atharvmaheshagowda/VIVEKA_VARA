@@ -23,7 +23,8 @@ class LocalEmotionBridge {
 
   private connect() {
     try {
-      const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8765';
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = import.meta.env.VITE_WS_URL || `${protocol}//${window.location.host}`;
       this.socket = new WebSocket(wsUrl);
 
       this.socket.onopen = () => {

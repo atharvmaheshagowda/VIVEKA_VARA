@@ -4,6 +4,8 @@ import websockets
 import http
 import json
 import cv2
+import mimetypes
+from pathlib import Path
 import threading
 import queue
 import time
@@ -396,13 +398,41 @@ async def handler(websocket):
 
 async def process_request(path, request_headers):
     """
-    Handle Render's standard HTTP health checks (GET/HEAD).
-    Websockets library normally expects a specific handshake, so we 
-    intercept standard requests to return an 'OK' status.
+    Handle HTTP requests. 
+    1. Health checks (Render).
+    2. Serve static frontend files from 'dist'.
     """
-    if "Upgrade" not in request_headers.get("Connection", ""):
-        return http.HTTPStatus.OK, [], b"OK"
-    return None
+    # If it's a websocket upgrade, let the library handle it
+    if "Upgrade" in request_headers.get("Connection", ""):
+        return None
+
+    # Determine file path
+    # 'path' starts with /
+    if path == "/":
+        path = "/index.html"
+    
+    # Static files are in the root 'dist' folder
+    # backend/emotion_bridge.py -> ../dist
+    dist_path = Path(__file__).parent.parent / "dist"
+    file_path = (dist_path / path.lstrip("/")).resolve()
+
+    # Security check: ensure file is inside dist
+    if not str(file_path).startswith(str(dist_path.resolve())):
+        return http.HTTPStatus.FORBIDDEN, [], b"Access Denied"
+
+    if file_path.exists() and file_path.is_file():
+        content_type, _ = mimetypes.guess_type(str(file_path))
+        if not content_type:
+            content_type = "application/octet-stream"
+        
+        return http.HTTPStatus.OK, [("Content-Type", content_type)], file_path.read_bytes()
+
+    # Fallback to index.html for SPA routing
+    index_file = dist_path / "index.html"
+    if index_file.exists():
+        return http.HTTPStatus.OK, [("Content-Type", "text/html")], index_file.read_bytes()
+
+    return http.HTTPStatus.NOT_FOUND, [], b"Not Found"
 
 async def main():
     host = "0.0.0.0"
