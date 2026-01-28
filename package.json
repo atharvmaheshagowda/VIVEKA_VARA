@@ -11,9 +11,9 @@
   "dependencies": {
     "@google/genai": "1.36.0",
     "@google/generative-ai": "^0.24.1",
-    "@tsparticles/engine": "3.0.0",
+    "@tsparticles/engine": "3.0.2",
     "@tsparticles/react": "3.0.0",
-    "@tsparticles/slim": "3.0.0",
+    "@tsparticles/slim": "3.0.2",
     "clsx": "2.1.0",
     "framer-motion": "11.0.8",
     "lucide-react": "0.344.0",
