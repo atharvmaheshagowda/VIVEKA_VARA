@@ -1,6 +1,7 @@
 import asyncio
 import os
 import websockets
+import http
 import json
 import cv2
 import threading
@@ -393,13 +394,29 @@ async def handler(websocket):
     except websockets.ConnectionClosed:
         print("Client disconnected")
 
+async def process_request(path, request_headers):
+    """
+    Handle Render's standard HTTP health checks (GET/HEAD).
+    Websockets library normally expects a specific handshake, so we 
+    intercept standard requests to return an 'OK' status.
+    """
+    if "Upgrade" not in request_headers.get("Connection", ""):
+        return http.HTTPStatus.OK, [], b"OK"
+    return None
+
 async def main():
     host = "0.0.0.0"
     port = int(os.environ.get("PORT", WS_PORT))
     print(f"Starting Advanced Emotion Backend on {host}:{port}...")
     ai_thread = AIThread(ai_queue)
     ai_thread.start()
-    async with websockets.serve(handler, host, port, max_size=10_000_000):
+    async with websockets.serve(
+        handler, 
+        host, 
+        port, 
+        max_size=10_000_000,
+        process_request=process_request
+    ):
         print("Server Running.")
         await asyncio.to_thread(ai_thread.join) # Keep main alive
 
