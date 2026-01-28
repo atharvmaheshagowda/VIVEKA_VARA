@@ -10,9 +10,8 @@ services:
         value: 10000
 
   # Frontend Service (Vite React App)
-  - type: web
+  - type: static_site
     name: viveka-vara-frontend
-    runtime: static
     publishPath: dist
     buildCommand: npm install && npm run build
     envVars:
