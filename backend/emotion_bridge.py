@@ -15,7 +15,7 @@ from pathlib import Path
 # -----------------------------------------------------------------------------
 PORT = int(os.environ.get("PORT", 10000))
 DETECTOR_BACKEND = "ssd"
-EMA_ALPHA = 0.3
+EMA_ALPHA = 0.3          # Smoothing factor
 CONFIDENCE_THRESHOLD = 0.40
 CALIBRATION_FRAMES = 20
 EMOTIONS = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
@@ -31,6 +31,7 @@ current_state = {
 }
 
 def apply_clahe(image):
+    """Contrast Limited Adaptive Histogram Equalization."""
     try:
         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
@@ -41,7 +42,7 @@ def apply_clahe(image):
     except: return image
 
 # -----------------------------------------------------------------------------
-# AI Thread (Same logic as before)
+# AI Thread (Advanced Logic)
 # -----------------------------------------------------------------------------
 class AIThread(threading.Thread):
     def __init__(self, input_queue):
@@ -63,7 +64,7 @@ class AIThread(threading.Thread):
             self.DeepFace = DeepFace
             dummy = np.zeros((100, 100, 3), dtype=np.uint8)
             DeepFace.analyze(img_path=dummy, actions=['emotion'], detector_backend=DETECTOR_BACKEND, enforce_detection=False, silent=True)
-            current_state["status"] = "Calibrating..."
+            current_state["status"] = "Calibrating (Sit Still)..."
         except Exception as e:
             current_state["status"] = f"AI Error: {e}"
             return
@@ -71,49 +72,111 @@ class AIThread(threading.Thread):
         while self.running:
             try:
                 frame = self.input_queue.get(timeout=0.1)
-                small_frame = apply_clahe(cv2.resize(frame, (640, 480)) if frame.shape[1] > 640 else frame)
+            except queue.Empty:
+                continue
+
+            try:
+                # 1. Preprocessing
+                h, w = frame.shape[:2]
+                target_size = 640
+                scale = min(target_size/w, target_size/h)
+                small_frame = cv2.resize(frame, (0, 0), fx=scale, fy=scale) if scale < 1.0 else frame
+                small_frame = apply_clahe(small_frame)
+
+                # 2. Raw Analysis
                 results = self.DeepFace.analyze(img_path=small_frame, actions=['emotion'], detector_backend=DETECTOR_BACKEND, enforce_detection=False, silent=True)
-                
                 if not results:
+                    self.decay_ema()
                     continue
 
                 raw_scores = results[0]['emotion']
                 total_score = sum(raw_scores.values())
                 normalized_raw = {k: v / total_score for k, v in raw_scores.items()} if total_score > 0 else {e: 0.0 for e in EMOTIONS}
 
+                # 3. Calibration Phase
                 if self.is_calibrating:
                     self.calibration_buffer.append(normalized_raw)
                     if len(self.calibration_buffer) >= CALIBRATION_FRAMES:
-                        sums = {e: sum(v[e] for v in self.calibration_buffer) / len(self.calibration_buffer) for e in EMOTIONS}
-                        self.rest_vector = sums
-                        self.is_calibrating = False
-                        current_state["status"] = "Active"
+                        self.finish_calibration()
                     continue
 
-                # Decision Logic (Simplified for brevity but maintaining intensity/state updates)
-                adjusted = {e: max(0.0, normalized_raw[e] - self.rest_vector[e]) for e in EMOTIONS}
-                total_adj = sum(adjusted.values())
+                # 4. Neural Subtraction (Remove Resting Face)
+                adjusted_scores = {emo: max(0.0, normalized_raw.get(emo, 0.0) - self.rest_vector.get(emo, 0.0)) for emo in EMOTIONS}
+                total_adj = sum(adjusted_scores.values())
                 if total_adj > 0:
-                    for e in adjusted: adjusted[e] /= total_adj
+                    for k in adjusted_scores: adjusted_scores[k] /= total_adj
                 else:
-                    adjusted['neutral'] = 1.0
+                    adjusted_scores = {e: 0.0 for e in EMOTIONS}; adjusted_scores['neutral'] = 1.0
 
-                for e in EMOTIONS:
-                    self.ema_scores[e] = (EMA_ALPHA * np.sqrt(adjusted[e])) + ((1 - EMA_ALPHA) * self.ema_scores[e])
+                # 5. EMA Smoothing (Temporal Stability with Sqrt Scaling)
+                for emo in EMOTIONS:
+                    score = adjusted_scores.get(emo, 0.0)
+                    self.ema_scores[emo] = (EMA_ALPHA * np.sqrt(score)) + ((1 - EMA_ALPHA) * self.ema_scores.get(emo, 0.0))
 
-                top_emotion = max(self.ema_scores, key=self.ema_scores.get)
-                top_confidence = self.ema_scores[top_emotion]
-
-                # Update State
-                current_state["emotion"] = top_emotion if top_confidence >= CONFIDENCE_THRESHOLD else "neutral"
-                current_state["intensity"] = float(top_confidence * 100)
+                # 6. Decision logic & FACS Disambiguation
+                sorted_emotions = sorted(self.ema_scores.items(), key=lambda x: x[1], reverse=True)
+                top_emotion, top_confidence = sorted_emotions[0]
                 
-                # Inner State Momentum
-                delta = 0.02 * top_confidence if top_emotion in ['happy', 'neutral', 'surprise'] else -0.05 * top_confidence
-                current_state["inner_state"] = max(0.0, min(1.0, current_state["inner_state"] + delta))
+                # Angry/Fear Disambiguation
+                candidate_map = {e: s for e, s in sorted_emotions[:2]}
+                if 'angry' in candidate_map and 'fear' in candidate_map:
+                    if abs(candidate_map['angry'] - candidate_map['fear']) < 0.15:
+                        if self.ema_scores.get('surprise', 0) > 0.10: self.ema_scores['fear'] += 0.20
+                        if self.ema_scores.get('disgust', 0) > 0.10: self.ema_scores['angry'] += 0.20
+                        top_emotion = max(self.ema_scores, key=self.ema_scores.get)
+                        top_confidence = self.ema_scores[top_emotion]
 
-            except queue.Empty: continue
-            except Exception: continue
+                # Hysteresis Lock-in
+                current_emo = current_state["emotion"]
+                if current_emo in ['angry', 'fear'] and top_emotion in ['angry', 'fear'] and top_emotion != current_emo:
+                    if top_confidence < (self.ema_scores.get(current_emo, 0) * 1.20):
+                        top_emotion = current_emo
+                        top_confidence = self.ema_scores[current_emo]
+
+                resolved_emotion = top_emotion if top_confidence >= CONFIDENCE_THRESHOLD else "neutral"
+
+                # 7. Temporal Stability Guard (Debounce)
+                current_time = time.time()
+                final_output_emotion = self.last_committed_emotion
+                
+                if resolved_emotion != self.last_committed_emotion:
+                    if resolved_emotion != self.candidate_emotion:
+                        self.candidate_emotion = resolved_emotion
+                        self.candidate_start_time = current_time
+                    else:
+                        elapsed = current_time - self.candidate_start_time
+                        required_duration = 0.5
+                        if elapsed >= required_duration:
+                            self.last_committed_emotion = resolved_emotion
+                            final_output_emotion = resolved_emotion
+                            self.candidate_emotion = None
+                else:
+                    self.candidate_emotion = None
+                    final_output_emotion = resolved_emotion
+
+                current_state["emotion"] = final_output_emotion
+                current_state["intensity"] = float(top_confidence * 100)
+                current_state["status"] = "Active"
+                self.update_inner_state_momentum(final_output_emotion, top_confidence)
+
+            except Exception: pass
+
+    def decay_ema(self):
+        for emo in EMOTIONS: self.ema_scores[emo] *= 0.9
+
+    def finish_calibration(self):
+        sums = {e: sum(v[e] for v in self.calibration_buffer) / len(self.calibration_buffer) for e in EMOTIONS}
+        self.rest_vector = sums
+        self.is_calibrating = False
+
+    def update_inner_state_momentum(self, emotion, intensity):
+        current = current_state["inner_state"]
+        delta = 0.0
+        if emotion in ['happy', 'neutral', 'surprise']:
+            delta = 0.02 * (1.0 if emotion == 'neutral' else 2.0) * intensity
+        elif emotion in ['angry', 'sad', 'fear', 'disgust']:
+            delta = -0.05 * intensity
+        current_state["inner_state"] = max(0.0, min(1.0, current + delta))
 
 # -----------------------------------------------------------------------------
 # Aiohttp Server
