@@ -1,106 +1,102 @@
-<div align="center">
-</div>
+# Viveka Vara
 
-# Viveka Vara - A Generative Reality
+> **A Generative Reality That Responds To Your Emotions.**
 
-**Viveka Vara** is a generative reality engine that responds to your emotions in real-time. By analyzing your voice, text, and facial expressions, the system shifts the atmosphere, weather, and world around you, creating a deeply immersive and reactive experience.
+**Viveka Vara** is an immersive, emotion-reactive web application that creates a dynamic 2D environment reflecting your inner state. By analyzing text input, voice, or facial expressions, the system shifts the atmosphere, lighting, weather, and audio landscape in real-time to guide you towards clarity and balance.
 
-The project features a **Spirit Guide (Viveka)** that draws wisdom from the **Dakshinamurthy Stotra** to guide you through your emotional state, offering clarity and peace.
+---
 
 ## ✨ Key Features
 
-- **Generative Environment**: A reactive 2D world that visually shifts based on your emotional state (e.g., Calm, Turbulent, Melancholic).
-- **Multi-Modal Emotion Detection**:
-  - **Facial Analysis**: Real-time emotion detection using a local Python backend (DeepFace + RetinaFace).
-  - **Voice Analysis**: Speech-to-text integration detects emotional intent from your spoken words.
-  - **Text Analysis**: Sentiment analysis on typed input using Gemini AI.
-- **Spirit Guide (Viveka)**: An AI entity that speaks to you with wisdom tailored to your current mood.
-- **Privacy-First**: Facial analysis runs entirely locally on your machine.
+*   **🎭 Emotion-Responsive Environments**
+    The world changes based on 7 core emotions (Happy, Sad, Angry, Fear, Calm, Surprised, Neutral). A "Sad" state might bring rain and muted colors, while "Happy" brings golden sunlight and birds.
+
+*   **🧠 Multimodal Analysis**
+    *   **Text Analysis:** Uses **Gemini AI** to interpret the sentiment of your journals or thoughts.
+    *   **Voice Analysis:** (Prototype) Detects emotional tone from speech.
+    *   **Visual Analysis:** (Prototype) Uses camera input to detect facial expressions.
+
+*   **🔊 Procedural Audio Engine**
+    A custom Web Audio API engine generates ambient soundscapes (wind, rain, thunder, birds) on the fly, ensuring a unique auditory experience that matches the visual mood.
+
+*   **🗣️ The Voice Guide**
+    An integrated TTS (Text-to-Speech) guide that offers wisdom and context, capable of reciting the *Dakshinamurthy Stotram* to ground the user.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **React 18** (Vite)
-- **TypeScript**
-- **Tailwind CSS** & **Framer Motion** (for animations)
-- **Lucide React** (Icons)
-
-### Backend (Local AI Bridge)
-- **Python 3.8+**
-- **DeepFace** (Facial Emotion Analysis)
-- **WebSockets** (Real-time communication with frontend)
-- **OpenCV** (Camera input processing)
+*   **Frontend:** React, TypeScript, Vite
+*   **Styling:** Tailwind CSS, Lucide React (Icons)
+*   **AI Integration:** Google Gemini API
+*   **Audio:** Web Audio API (Procedural generation), Window.SpeechSynthesis (TTS)
+*   **State Management:** React Hooks
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v16+)
-- [Python](https://www.python.org/) (v3.8+)
-- A [Google Gemini API Key](https://aistudio.google.com/app/apikey)
+*   Node.js (v16+)
+*   A Google Gemini API Key
 
-### 1. Clone & Frontend Setup
-```bash
-# Install Node dependencies
-npm install
-```
+### Installation
 
-### 2. Configure Environment
-1. Create a `.env.local` file in the root directory.
-2. Add your Gemini API key:
-```env
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
-```
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/viveka-vara.git
+    cd viveka-vara
+    ```
 
-### 3. Backend Setup
-Install the required Python libraries for the Emotion Bridge:
-```bash
-pip install -r backend/requirements.txt
-```
-*Note: This installs DeepFace, OpenCV, WebSockets, etc.*
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
----
+3.  **Environment Setup**
+    Create a `.env.local` file in the root directory and add your API key:
+    ```env
+    GEMINI_API_KEY=your_api_key_here
+    ```
 
-## 🎮 How to Run
-
-### Method 1: Automatic Startup (Recommended)
-Simply double-click or run the batch file:
-```bash
-start_app.bat
-```
-This script will:
-1. Check for Node.js and Python.
-2. Install missing dependencies.
-3. Start the Python Backend (`emotion_bridge.py`).
-4. Launch the React App in your default browser.
-
-### Method 2: Manual Startup
-If you prefer to run services separately:
-
-**Terminal 1 (Backend):**
-```bash
-python backend/emotion_bridge.py
-```
-*Wait for "WebSocket Server Running" message.*
-
-**Terminal 2 (Frontend):**
-```bash
-npm run dev
-```
+4.  **Run Locally**
+    ```bash
+    npm run dev
+    ```
+    Open `http://localhost:5173` (or the port shown) in your browser.
 
 ---
 
-## 🧩 Project Structure
-- **/components**: React UI components (Dashboard, Simulation, VoiceGuide).
-- **/services**: API integrations (Gemini, Local Emotion Bridge).
-- **/backend**: Python scripts for facial analysis.
-- **/data**: Static data (Dakshinamurthy Stotra verses).
+## 🎧 Audio Assets
+
+This project includes generated audio assets for the offline experience. 
+Check out the **[Audio Assets Documentation](./AUDIO_ASSETS.md)** for details on how to generate the welcome message and explanations using the included PowerShell scripts.
 
 ---
 
-## 🔒 Privacy Note
-The facial emotion detection is performed **locally** on your device using `cv2` and `DeepFace`. Your video feed is **not** sent to any cloud server. Only text/speech content is processed by Gemini AI for contextual wisdom.
+## 📂 Project Structure
 
+```
+viveka-vara/
+├── components/         # React UI components
+│   ├── DashboardView.tsx   # Main user dashboard
+│   ├── SimulationView.tsx  # The 2D reactive world
+│   ├── VoiceGuide.tsx      # TTS & Interaction logic
+│   └── AmbientAudio.tsx    # Web Audio API engine
+├── data/              # Static data & configuration
+├── services/          # AI & API services
+├── lib/               # Utilities
+└── App.tsx            # Main application entry
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
